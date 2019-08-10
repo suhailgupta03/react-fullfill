@@ -352,6 +352,7 @@ class DataTable extends React.Component {
       // Deselected the item
       const transformedSelectedItems = { ...this.state.selectedItems };
       delete transformedSelectedItems[rowKey];
+      selectedItems = transformedSelectedItems;
       selected = false;
     } else {
       // Item needs to be selected
