@@ -21,6 +21,55 @@ const Main = React.memo(() => {
 
   useEffect(() => {}, [downCounter]);
 
+  /**
+   * Infinite scroll logic for the DataTable component
+   * Note: This method is called during the scroll
+   * event with the DataTable Component
+   * @param {Object} scrollInfo 
+   */
+  function infiniteScroll(scrollInfo) {
+    const { scrollDirection, scrollType } = scrollInfo;
+    // type: String = "up" | "down"
+    if (scrollType === "up") {
+      let maxUpJumpAllowed = upCounter + -1 * JUMP_VALUE;
+
+      if (maxUpJumpAllowed < 0) {
+        // Jump by the difference remaining
+        maxUpJumpAllowed = 0;
+      }
+      setUpCounter(maxUpJumpAllowed);
+      // As the upper counter is modified
+      // also modify the down counter
+      // This will lead to ~constant
+      // memory with the browser
+
+      if (scrollDirection === "up" && downCounter > 105) {
+        setDownCounter(downCounter - JUMP_VALUE);
+      }
+
+      // if (downCounter - JUMP_VALUE < 0) {
+      //   setDownCounter(MAX_RENDER);
+      // } else {
+      //   setDownCounter(downCounter - JUMP_VALUE);
+      // }
+    } else {
+      let nextCounter = downCounter + JUMP_VALUE;
+      // Check if we can scroll down more
+      if (nextCounter > data.length) {
+        // Looks like there isn't enough
+        // data to jump by 10
+        // We could confirm this
+        if (data.length > downCounter) {
+          // Now we can only go max by
+          // the difference of 2 counters
+          nextCounter = downCounter + (data.length - downCounter);
+        }
+      }
+      setDownCounter(nextCounter);
+      setUpCounter(upCounter + JUMP_VALUE);
+    }
+  }
+  
   return loading ? (
     <Spin className="d-flex justify-content-center" />
   ) : (
@@ -58,48 +107,7 @@ const Main = React.memo(() => {
         onSelectionChange={selectedRows => {
           // console.log(selectedRows, " onSelectionChange");
         }}
-        infiniteScroll={scrollInfo => {
-          const { scrollDirection, scrollType } = scrollInfo;
-          // type: String = "up" | "down"
-          if (scrollType === "up") {
-            let maxUpJumpAllowed = upCounter + -1 * JUMP_VALUE;
-
-            if (maxUpJumpAllowed < 0) {
-              // Jump by the difference remaining
-              maxUpJumpAllowed = 0;
-            }
-            setUpCounter(maxUpJumpAllowed);
-            // As the upper counter is modified
-            // also modify the down counter
-            // This will lead to ~constant
-            // memory with the browser
-
-            if (scrollDirection === "up" && downCounter > 105) {
-              setDownCounter(downCounter - JUMP_VALUE);
-            }
-
-            // if (downCounter - JUMP_VALUE < 0) {
-            //   setDownCounter(MAX_RENDER);
-            // } else {
-            //   setDownCounter(downCounter - JUMP_VALUE);
-            // }
-          } else {
-            let nextCounter = downCounter + JUMP_VALUE;
-            // Check if we can scroll down more
-            if (nextCounter > data.length) {
-              // Looks like there isn't enough
-              // data to jump by 10
-              // We could confirm this
-              if (data.length > downCounter) {
-                // Now we can only go max by
-                // the difference of 2 counters
-                nextCounter = downCounter + (data.length - downCounter);
-              }
-            }
-            setDownCounter(nextCounter);
-            setUpCounter(upCounter + JUMP_VALUE);
-          }
-        }}
+        infiniteScroll={infiniteScroll}
         totalDataPointsSeen={downCounter}
       />
     </div>
