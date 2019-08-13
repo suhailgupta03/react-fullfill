@@ -25,7 +25,7 @@ const Main = React.memo(() => {
    * Infinite scroll logic for the DataTable component
    * Note: This method is called during the scroll
    * event with the DataTable Component
-   * @param {Object} scrollInfo 
+   * @param {Object} scrollInfo
    */
   function infiniteScroll(scrollInfo) {
     const { scrollDirection, scrollType } = scrollInfo;
@@ -69,7 +69,29 @@ const Main = React.memo(() => {
       setUpCounter(upCounter + JUMP_VALUE);
     }
   }
-  
+
+  /**
+   * Call this function to get the rows that must
+   * be shown in the data table. This function utilizes
+   * the up-counter and down-counter that to pump
+   * the relevant data into the data table.
+   * @returns {Array} rowCluster
+   */
+  function composeTableRows() {
+    let rowCluster = data.slice(upCounter, downCounter);
+    if (searchString) {
+      /**
+       * If user has some search string entered
+       * use the that search string to filter
+       * the values
+       */
+      return rowCluster.filter(
+        value => value.title && value.title.includes(searchString)
+      );
+    } // else return the non-filtered data
+    return rowCluster;
+  }
+
   return loading ? (
     <Spin className="d-flex justify-content-center" />
   ) : (
@@ -87,20 +109,7 @@ const Main = React.memo(() => {
          * Render the data table
          */
         columns={DummyColumns}
-        rows={(() => {
-          let rowCluster = data.slice(upCounter, downCounter);
-          if (searchString) {
-            /**
-             * If user has some search string entered
-             * use the that search string to filter
-             * the values
-             */
-            return rowCluster.filter(
-              value => value.title && value.title.includes(searchString)
-            );
-          } // else return the non-filtered data
-          return rowCluster;
-        })()}
+        rows={composeTableRows()}
         onRowClick={(rowData, rowIndex, isSelected) => {
           // console.log(rowData, rowIndex, isSelected, " onRowClick");
         }}
