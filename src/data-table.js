@@ -181,7 +181,7 @@ class DataTable extends React.Component {
    *  - User has manually checked the checkbox
    *  - Flag to check all checkboxes is enabled (@see Constructor)
    */
-  isItemCheckboxChecked(userSelectedItem) {
+  isItemCheckboxChecked(userSelectedItem, columnValueMap, rowIndex, rowKey) {
     let mustBeChecked = false;
     if (userSelectedItem) {
       // Since the item is a user-selected-item
@@ -193,6 +193,18 @@ class DataTable extends React.Component {
       // all the new and old items appearing in the table
       // will be checked
       mustBeChecked = true;
+      // Note: Since this automatically checks the checkbox
+      // it is necessary to also modify the selectedItems
+      // state container
+      const rowObject = this.extractRowObject(columnValueMap, rowIndex);
+      this.setState({
+        selectedItems: {
+          ...this.state.selectedItems,
+          ...{
+            [rowKey]: rowObject
+          }
+        }
+      });
     }
 
     /**
@@ -258,7 +270,10 @@ class DataTable extends React.Component {
                         key={`${index}_${rowKeyContainer[i]}`}
                         checked={this.isItemCheckboxChecked.call(
                           this,
-                          isManuallySelectedItem
+                          isManuallySelectedItem,
+                          columnValueMap,
+                          rowIndex,
+                          rowKeyContainer[i]
                         )}
                         onChange={this.onRowSelection.bind(
                           this,
@@ -378,16 +393,28 @@ class DataTable extends React.Component {
   }
 
   /**
+   * Extracts the row from the col-label-map
+   * given the row index
+   * @param {Object} columnValueMap 
+   * @param {Number} rowIndex 
+   */
+  extractRowObject(columnValueMap, rowIndex) {
+    const rowObject = {};
+    for (const column in columnValueMap) {
+      rowObject[column] = columnValueMap[column][rowIndex];
+    }
+
+    return rowObject;
+  }
+
+  /**
    * Called when the row is clicked
    * @param {Object} columnValueMap
    * @param {Number} rowIndex
    * @param {Number} rowKey
    */
   onRowSelection(columnValueMap, rowIndex, rowKey) {
-    const rowObject = {};
-    for (const column in columnValueMap) {
-      rowObject[column] = columnValueMap[column][rowIndex];
-    }
+    const rowObject = this.extractRowObject(columnValueMap, rowIndex);
 
     let selected = true;
     let selectedItems = {};
@@ -406,6 +433,10 @@ class DataTable extends React.Component {
           [rowKey]: rowObject
         }
       };
+    }
+
+    if(this.state.isSelectAllChecboxEnabled) {
+      this.toggleSelectAllCheckbox();
     }
 
     this.setState({
