@@ -92,10 +92,12 @@ const Main = React.memo(() => {
     return rowCluster;
   }
 
-  return loading ? (
-    <Spin className="d-flex justify-content-center" />
-  ) : (
-    <div className="d-flex flex-column">
+  /**
+   * The following function returns the
+   * search-bar component
+   */
+  function getSearchBar() {
+    return (
       <SearchBar
         /**
          * Render the search bar
@@ -104,6 +106,14 @@ const Main = React.memo(() => {
           setUpSearchString(searchValue);
         }}
       />
+    );
+  }
+
+  /**
+   * This function returns the main data-table component
+   */
+  function getDataTable() {
+    return (
       <DataTable
         /**
          * Render the data table
@@ -119,6 +129,25 @@ const Main = React.memo(() => {
         infiniteScroll={infiniteScroll}
         totalDataPointsSeen={downCounter}
       />
+    );
+  }
+
+  /**
+   * The following returns the JSX (elements) to be rendered.
+   * Note:
+   *  - When the data from the REST API has not been loaded, the call
+   *  simply returns the spinner (or the loader)
+   *
+   *  - When the data from the REST API is returned, the call returns
+   *  the SearchBar component and the DataTable component stacked
+   *  on the top of each other
+   */
+  return loading ? (
+    <Spin className="d-flex justify-content-center" />
+  ) : (
+    <div className="d-flex flex-column">
+      {getSearchBar()}
+      {getDataTable()}
     </div>
   );
 });
