@@ -6,7 +6,14 @@ class DataTable extends React.Component {
     this.prevTop = 0;
     this.prevBottom = Infinity;
     this.state = {
-      selectedItems: [] // Container for the selected products
+      selectedItems: [], // Container for the selected products
+      isSelectAllChecboxEnabled: false // Boolean flag that represents
+      // the select-all checkbox
+      // Note: If this flag is enabled, new rows being added
+      // to the table as a result of the infinite scroll
+      // will be automatically checked. To disable this
+      // behavior, the select all checkbox must
+      // be unchecked
     };
   }
 
@@ -124,6 +131,7 @@ class DataTable extends React.Component {
                     <input
                       className="form-check-input"
                       type="checkbox"
+                      checked={this.state.isSelectAllChecboxEnabled}
                       onChange={this.onAllRowsSelected.bind(
                         this,
                         rowKeyContainer,
@@ -165,6 +173,37 @@ class DataTable extends React.Component {
       value
     );
   }
+
+  /**
+   * Returns a boolean flag determining if the item checkbox
+   * is checked / unchecked. The checkbox will be checked
+   * when:
+   *  - User has manually checked the checkbox
+   *  - Flag to check all checkboxes is enabled (@see Constructor)
+   */
+  isItemCheckboxChecked(userSelectedItem) {
+    let mustBeChecked = false;
+    if (userSelectedItem) {
+      // Since the item is a user-selected-item
+      // the current state of the checkbox
+      // must reflect the same
+      mustBeChecked = true;
+    } else if (this.state.isSelectAllChecboxEnabled) {
+      // Since the user has checked the select-all-checkbox
+      // all the new and old items appearing in the table
+      // will be checked
+      mustBeChecked = true;
+    }
+
+    /**
+     * Note: The above 2 conditions could be clubbed
+     * togethor with a single OR operation but as an author
+     * I find separating them into "2" if statements
+     * more compelling and easy to understand
+     */
+    return mustBeChecked;
+  }
+
   /**
    * This function prepares the row structure for the table
    * @param {Array} possibleTableColumns
@@ -183,6 +222,10 @@ class DataTable extends React.Component {
     const currentKeysSelected = Object.keys(this.state.selectedItems);
     if (possibleTableColumns.length > 0) {
       for (let i = 0, rowIndex = 0; i < totalRows; i++, rowIndex++) {
+        // Initialize a flag that denotes if the item was manually selected
+        const isManuallySelectedItem = currentKeysSelected.includes(
+          rowKeyContainer[i].toString()
+        );
         tableRowContainer = [
           ...tableRowContainer,
           <tr
@@ -213,8 +256,9 @@ class DataTable extends React.Component {
                         className="form-check-input"
                         type="checkbox"
                         key={`${index}_${rowKeyContainer[i]}`}
-                        checked={currentKeysSelected.includes(
-                          rowKeyContainer[i].toString()
+                        checked={this.isItemCheckboxChecked.call(
+                          this,
+                          isManuallySelectedItem
                         )}
                         onChange={this.onRowSelection.bind(
                           this,
@@ -382,6 +426,15 @@ class DataTable extends React.Component {
   }
 
   onAllRowsSelected(rowKeyContainer, totalRows, colValMap, event) {
+    // Let the first task, when the user clicks
+    // on the select-all-checkbox be to signal the
+    // react to toggle its state
+    // i.e enabled turns to disabled and vice versa
+    this.toggleSelectAllCheckbox();
+
+    // After the react has been signalled to toggle
+    // the checkbox state, proceed with the other
+    // operations
     let selectedItems = {};
     let selected = false;
     if (event.target.checked) {
@@ -411,13 +464,27 @@ class DataTable extends React.Component {
   }
 
   /**
+   * Call this function to toggle the select-all
+   * checkbox state
+   */
+  toggleSelectAllCheckbox() {
+    // Toggle the boolean flag and signal a state
+    // change to react
+    this.setState({
+      isSelectAllChecboxEnabled: !this.state.isSelectAllChecboxEnabled
+    });
+  }
+
+  /**
    * Method that shows the current data rows in the page
    * and also shows the data points seen
    */
   renderDataPointCount() {
     return (
       <div className="p-2 d-flex justify-content-end sticky-top">
-      <span class="badge badge-primary small">Seen: {this.props.totalDataPointsSeen}</span>
+        <span class="badge badge-primary small">
+          Seen: {this.props.totalDataPointsSeen}
+        </span>
       </div>
     );
   }
